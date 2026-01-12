@@ -41,7 +41,7 @@ public class AirportService {
                 .collect(Collectors.toList());
     }
 
-        public List<AirportDTO> getByCityCode(String cityCode) {
+    public List<AirportDTO> getByCityCode(String cityCode) {
         return airportRepository.findAllByParentCity_CityCode(cityCode)
             .stream()
             .map(c -> new AirportDTO(
@@ -54,9 +54,7 @@ public class AirportService {
                 c.getParentCity() != null ? c.getParentCity().getCityCode() : null
             ))
             .collect(Collectors.toList());
-        }
-
-
+    }
 
     public int saveByCityCode(String cityCode) {
         if (cityCode == null || cityCode.isBlank()) return 0;

@@ -1,7 +1,9 @@
 package com.example.airlabproject.service;
 
+import com.example.airlabproject.dto.CountryDTO;
+import com.example.airlabproject.dto.FlightScheduleDTO;
 import com.example.airlabproject.entity.FlightSchedule;
-import com.example.airlabproject.repository.FlightRepository;
+import com.example.airlabproject.repository.FlightScheduleRepository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,12 +21,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-public class FlightService {
+public class FlightScheduleService {
 
     @Autowired
-    private FlightRepository flightRepository;
+    private FlightScheduleRepository flightRepository;
 
     @Value("${api-key-airlabs}")
     private String apiKey;
@@ -47,6 +50,24 @@ public class FlightService {
         System.out.println("--> Gọi AIRLABS API mới");
         return fetchFromApiAndSave(airportCode);
     }
+
+    public List<FlightScheduleDTO> getAll() {
+        return flightRepository.findAll().stream()
+            .map(f -> new FlightScheduleDTO(
+                f.getAirlineIata(), f.getFlightIata(), f.getDepIata(), f.getArrIata(), f.getStatus(), f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
+            ))
+            .collect(Collectors.toList());
+    }
+
+    public List<FlightScheduleDTO> getFlightsByAirportCode(String airportCode) {
+        return flightRepository.findByDepIata(airportCode).stream()
+            .map(f -> new FlightScheduleDTO(
+                f.getAirlineIata(), f.getFlightIata(), f.getDepIata(), f.getArrIata(), f.getStatus(), f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
+            ))
+            .collect(Collectors.toList());
+    }
+
+
 
     private List<FlightSchedule> fetchFromApiAndSave(String airportCode) {
         String url = API_URL + "?dep_iata=" + airportCode + "&api_key=" + apiKey;

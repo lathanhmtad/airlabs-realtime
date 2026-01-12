@@ -25,6 +25,6 @@ public class CityController {
 
     @PostMapping("/set-all")
     public int setAll() {
-        return cityService.setAll();
+        return cityService.saveAllVietnamCityFromAirlabs();
     }
 }

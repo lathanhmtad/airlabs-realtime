@@ -1,7 +1,7 @@
 package com.example.airlabproject.controller;
 
 import com.example.airlabproject.entity.FlightSchedule;
-import com.example.airlabproject.service.FlightService;
+import com.example.airlabproject.service.FlightScheduleService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,9 +15,9 @@ import java.util.Map;
 
 @Controller
 @AllArgsConstructor
-public class FlightController {
+public class PageController {
 
-    private FlightService flightService;
+    private FlightScheduleService flightService;
 
     // Dữ liệu giả lập mapping City -> Airports (Thực tế có thể lưu trong DB)
     private Map<String, Map<String, String>> getVietnamAirports() {

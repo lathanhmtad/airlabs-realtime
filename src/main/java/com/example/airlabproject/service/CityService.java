@@ -56,7 +56,7 @@ public class CityService {
                 .collect(Collectors.toList());
     }
 
-    public int setAll() {
+    public int saveAllVietnamCityFromAirlabs() {
         // Only import cities for Vietnam (VN)
         Country vn = countryRepository.findById("VN").orElse(null);
         if (vn == null) return 0;
