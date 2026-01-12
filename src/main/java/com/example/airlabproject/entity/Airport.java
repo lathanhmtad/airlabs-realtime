@@ -28,6 +28,10 @@ public class Airport {
     @JoinColumn(name = "country_code")
     private Country parentCountry;
 
+    @ManyToOne
+    @JoinColumn(name = "city_code")
+    private City parentCity;
+
     // ===== getters & setters =====
 
     public String getIataCode() {
@@ -76,5 +80,12 @@ public class Airport {
 
     public void setParentCountry(Country parentCountry) {
         this.parentCountry = parentCountry;
+    }
+
+    public City getParentCity() {
+        return parentCity;
+    }
+    public void setParentCity(City parentCity) {
+        this.parentCity = parentCity;
     }
 }

@@ -51,19 +51,29 @@
         <table th:if="${!flights.empty}" class="table table-striped table-hover">
             <thead>
             <tr>
-                <th>Chuyến bay</th>
-                <th>Nơi đến</th>
-                <th>Giờ đi (Dự kiến)</th>
+                <th>Hãng (IATA)</th>
+                <th>Chuyến bay (IATA)</th>
+                <th>Đi (IATA)</th>
+                <th>Giờ đi</th>
+                <th>Giờ đi UTC</th>
+                <th>Đến (IATA)</th>
+                <th>Giờ đến</th>
+                <th>Giờ đến UTC</th>
                 <th>Trạng thái</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="flight : ${flights}">
-                <td th:text="${flight.flightIata}">VN123</td>
-                <td th:text="${flight.arrIata}">SGN</td>
-                <td th:text="${#temporals.format(flight.depTime, 'HH:mm dd/MM/yyyy')}">12:00</td>
+                <td th:text="${flight.airlineIata != null ? flight.airlineIata : '-'}">VJ</td>
+                <td th:text="${flight.flightIata != null ? flight.flightIata : '-'}">VJ719</td>
+                <td th:text="${flight.depIata != null ? flight.depIata : '-'}">DAD</td>
+                <td th:text="${flight.depTime != null ? #temporals.format(flight.depTime, 'HH:mm dd/MM/yyyy') : '-'}">08:25 12/01/2026</td>
+                <td th:text="${flight.depTimeUtc != null ? #temporals.format(flight.depTimeUtc, 'HH:mm dd/MM/yyyy') : '-'}">01:25 12/01/2026</td>
+                <td th:text="${flight.arrIata != null ? flight.arrIata : '-'}">PQC</td>
+                <td th:text="${flight.arrTime != null ? #temporals.format(flight.arrTime, 'HH:mm dd/MM/yyyy') : '-'}">10:10 12/01/2026</td>
+                <td th:text="${flight.arrTimeUtc != null ? #temporals.format(flight.arrTimeUtc, 'HH:mm dd/MM/yyyy') : '-'}">03:10 12/01/2026</td>
                 <td>
-                        <span th:class="${flight.status == 'active' ? 'badge bg-success' : 'badge bg-secondary'}"
+                        <span th:class="${flight.status == 'active' || flight.status == 'landed' ? 'badge bg-success' : 'badge bg-secondary'}"
                               th:text="${flight.status}">
                         </span>
                 </td>

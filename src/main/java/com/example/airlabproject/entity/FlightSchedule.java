@@ -12,6 +12,7 @@ public class FlightSchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String airlineIata; // Hãng bay (IATA)
     private String flightIata;  // Số hiệu chuyến bay (VN123)
     private String depIata;     // Sân bay đi (HAN)
     private String arrIata;     // Sân bay đến (SGN)
@@ -19,6 +20,8 @@ public class FlightSchedule {
 
     private LocalDateTime depTime; // Giờ đi
     private LocalDateTime arrTime; // Giờ đến
+    private LocalDateTime depTimeUtc; // Giờ đi UTC
+    private LocalDateTime arrTimeUtc; // Giờ đến UTC
 
     // Trường quan trọng để check cache
     private LocalDateTime createdAt;

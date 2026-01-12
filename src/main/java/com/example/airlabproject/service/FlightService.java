@@ -2,11 +2,19 @@ package com.example.airlabproject.service;
 
 import com.example.airlabproject.entity.FlightSchedule;
 import com.example.airlabproject.repository.FlightRepository;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,47 +49,65 @@ public class FlightService {
     }
 
     private List<FlightSchedule> fetchFromApiAndSave(String airportCode) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = API_URL + "?dep_iata=" + airportCode + "&api_key=" + apiKey;
 
         try {
-            // Gọi API và parse JSON thủ công để linh hoạt
-            String response = restTemplate.getForObject(url, String.class);
-            tools.jackson.databind.ObjectMapper mapper = new ObjectMapper();
-            tools.jackson.databind.JsonNode root = mapper.readTree(response);
-            JsonNode responseArray = root.path("response");
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
+            JsonArray responseArray = root.has("response") && root.get("response").isJsonArray() ? root.getAsJsonArray("response") : null;
 
             List<FlightSchedule> flightList = new ArrayList<>();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-            if (responseArray.isArray()) {
-                for (JsonNode node : responseArray) {
-                    FlightSchedule f = new FlightSchedule();
-                    f.setFlightIata(node.path("flight_iata").asText());
-                    f.setDepIata(node.path("dep_iata").asText());
-                    f.setArrIata(node.path("arr_iata").asText());
-                    f.setStatus(node.path("status").asText());
+            if (responseArray != null) {
+                for (JsonElement el : responseArray) {
+                    JsonObject node = el.getAsJsonObject();
 
-                    // Parse thời gian (cần xử lý try-catch nếu format sai, ở đây làm đơn giản)
-                    try {
-                        String depTimeStr = node.path("dep_time").asText();
-                        String arrTimeStr = node.path("arr_time").asText();
-                        if(!depTimeStr.isEmpty()) f.setDepTime(LocalDateTime.parse(depTimeStr, formatter));
-                        if(!arrTimeStr.isEmpty()) f.setArrTime(LocalDateTime.parse(arrTimeStr, formatter));
-                    } catch (Exception e) {
-                        // Bỏ qua lỗi parse date
-                    }
+                    FlightSchedule f = new FlightSchedule();
+
+                    // Strings
+                    f.setAirlineIata(getString(node, "airline_iata"));
+                    f.setFlightIata(getString(node, "flight_iata"));
+                    f.setDepIata(getString(node, "dep_iata"));
+                    f.setArrIata(getString(node, "arr_iata"));
+                    f.setStatus(getString(node, "status"));
+
+                    // Times (local & UTC)
+                    f.setDepTime(parseTime(getString(node, "dep_time"), formatter));
+                    f.setDepTimeUtc(parseTime(getString(node, "dep_time_utc"), formatter));
+                    f.setArrTime(parseTime(getString(node, "arr_time"), formatter));
+                    f.setArrTimeUtc(parseTime(getString(node, "arr_time_utc"), formatter));
 
                     flightList.add(f);
                 }
             }
 
+            // Refresh cache for this departure airport
             flightRepository.deleteByDepIata(airportCode);
             return flightRepository.saveAll(flightList);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ArrayList<>(); // Trả về rỗng nếu lỗi
+            // Log minimal; return empty list on error
+            return new ArrayList<>();
+        }
+    }
+
+    private String getString(JsonObject obj, String key) {
+        return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : null;
+    }
+
+    private LocalDateTime parseTime(String value, DateTimeFormatter fmt) {
+        try {
+            if (value == null || value.isEmpty()) return null;
+            return LocalDateTime.parse(value, fmt);
+        } catch (Exception ignore) {
+            return null;
         }
     }
 }
