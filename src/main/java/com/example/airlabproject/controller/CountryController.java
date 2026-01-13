@@ -16,7 +16,10 @@ public class CountryController {
     }
 
     @GetMapping
-    public List<CountryDTO> getAll() {
+    public List<CountryDTO> getAll(@RequestParam(value = "continent_id", required = false) String continentId) {
+        if (continentId != null && !continentId.isBlank()) {
+            return countryService.getByContinentId(continentId);
+        }
         return countryService.getAll();
     }
 

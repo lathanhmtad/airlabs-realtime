@@ -3,10 +3,8 @@ package com.example.airlabproject.service;
 import com.example.airlabproject.dto.AirportDTO;
 import com.example.airlabproject.entity.Airport;
 import com.example.airlabproject.entity.Country;
-import com.example.airlabproject.entity.City;
 import com.example.airlabproject.repository.AirportRepository;
 import com.example.airlabproject.repository.CountryRepository;
-import com.example.airlabproject.repository.CityRepository;
 import com.google.gson.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,26 +21,24 @@ import java.util.stream.Collectors;
 public class AirportService {
     private final CountryRepository countryRepository;
     private final AirportRepository airportRepository;
-    private final CityRepository cityRepository;
 
     @Value("${api-key-airlabs}")
     private String airlabsApiKey;
 
-    public AirportService(CountryRepository countryRepository, AirportRepository airportRepository, CityRepository cityRepository) {
+    public AirportService(CountryRepository countryRepository, AirportRepository airportRepository) {
         this.countryRepository = countryRepository;
         this.airportRepository = airportRepository;
-        this.cityRepository = cityRepository;
     }
 
     public List<AirportDTO> getAll() {
         return airportRepository.findAll()
                 .stream()
-                .map(c -> new AirportDTO(c.getIataCode(), c.getName(), c.getIcaoCode(), c.getLat(), c.getLng(), c.getParentCountry() != null ? c.getParentCountry().getCode() : null, c.getParentCity() != null ? c.getParentCity().getCityCode() : null))
+                .map(c -> new AirportDTO(c.getIataCode(), c.getName(), c.getIcaoCode(), c.getLat(), c.getLng(), c.getParentCountry() != null ? c.getParentCountry().getCode() : null))
                 .collect(Collectors.toList());
     }
 
-    public List<AirportDTO> getByCityCode(String cityCode) {
-        return airportRepository.findAllByParentCity_CityCode(cityCode)
+    public List<AirportDTO> getByCountryCode(String countryCode) {
+        return airportRepository.findAllByParentCountry_Code(countryCode)
             .stream()
             .map(c -> new AirportDTO(
                 c.getIataCode(),
@@ -50,23 +46,21 @@ public class AirportService {
                 c.getIcaoCode(),
                 c.getLat(),
                 c.getLng(),
-                c.getParentCountry() != null ? c.getParentCountry().getCode() : null,
-                c.getParentCity() != null ? c.getParentCity().getCityCode() : null
+                c.getParentCountry() != null ? c.getParentCountry().getCode() : null
             ))
             .collect(Collectors.toList());
     }
 
-    public int saveByCityCode(String cityCode) {
-        if (cityCode == null || cityCode.isBlank()) return 0;
+    public int saveByCountryCode(String countryCode) {
+        if (countryCode == null || countryCode.isBlank()) return 0;
 
-        City cityRef = cityRepository.findById(cityCode).orElse(null);
-        if (cityRef == null) return 0; // require existing city (FK constraint)
-
+        Country countryRef = countryRepository.findById(countryCode).orElse(null);
+        if (countryRef == null) return 0; // require existing country (FK constraint)
         int saved = 0;
         HttpClient client = HttpClient.newHttpClient();
         Gson gson = new GsonBuilder().create();
 
-        String url = "https://airlabs.co/api/v9/airports?api_key=" + airlabsApiKey + "&city_code=" + cityCode;
+        String url = "https://airlabs.co/api/v9/airports?api_key=" + airlabsApiKey + "&country_code=" + countryCode;
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -85,7 +79,6 @@ public class AirportService {
                 String iata = obj.has("iata_code") && !obj.get("iata_code").isJsonNull() ? obj.get("iata_code").getAsString() : null;
                 String name = obj.has("name") && !obj.get("name").isJsonNull() ? obj.get("name").getAsString() : null;
                 String icao = obj.has("icao_code") && !obj.get("icao_code").isJsonNull() ? obj.get("icao_code").getAsString() : null;
-                String countryCode = obj.has("country_code") && !obj.get("country_code").isJsonNull() ? obj.get("country_code").getAsString() : null;
 
                 java.math.BigDecimal lat = null;
                 java.math.BigDecimal lng = null;
@@ -104,7 +97,6 @@ public class AirportService {
                 ap.setIcaoCode(icao);
                 ap.setLat(lat);
                 ap.setLng(lng);
-                ap.setParentCity(cityRef); // city_code = input cityCode
 
                 if (countryCode != null) {
                     Country parent = countryRepository.findById(countryCode).orElse(null);

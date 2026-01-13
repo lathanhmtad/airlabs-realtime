@@ -38,6 +38,14 @@ public class CountryService {
                 .collect(Collectors.toList());
     }
 
+    public List<CountryDTO> getByContinentId(String continentId) {
+        if (continentId == null || continentId.isBlank()) return getAll();
+        return countryRepository.findAllByContinent_Id(continentId)
+                .stream()
+                .map(c -> new CountryDTO(c.getCode(), c.getCode3(), c.getName(), c.getContinent() != null ? c.getContinent().getId() : null))
+                .collect(Collectors.toList());
+    }
+
     public int setAll() {
         List<Continent> continents = continentRepository.findAll();
         if (continents.isEmpty()) return 0;

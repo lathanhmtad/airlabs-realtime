@@ -9,16 +9,14 @@ public class AirportDTO {
     private BigDecimal lat;
     private BigDecimal lng;
     private String countryCode; // FK dạng String
-    private String cityCode; // FK dạng String
 
-    public AirportDTO(String iataCode, String name, String icaoCode, BigDecimal lat, BigDecimal lng, String countryCode, String cityCode) {
+    public AirportDTO(String iataCode, String name, String icaoCode, BigDecimal lat, BigDecimal lng, String countryCode) {
         this.iataCode = iataCode;
         this.name = name;
         this.icaoCode = icaoCode;
         this.lat = lat;
         this.lng = lng;
         this.countryCode = countryCode;
-        this.cityCode = cityCode;
     }
 
     public String getIataCode() {
@@ -69,10 +67,4 @@ public class AirportDTO {
         this.countryCode = countryCode;
     }
 
-    public String getCityCode() {
-        return cityCode;
-    }
-    public void setCityCode(String cityCode) {
-        this.cityCode = cityCode;
-    }
 }

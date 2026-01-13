@@ -28,9 +28,6 @@ public class Airport {
     @JoinColumn(name = "country_code")
     private Country parentCountry;
 
-    @ManyToOne
-    @JoinColumn(name = "city_code")
-    private City parentCity;
 
     // ===== getters & setters =====
 
@@ -82,10 +79,4 @@ public class Airport {
         this.parentCountry = parentCountry;
     }
 
-    public City getParentCity() {
-        return parentCity;
-    }
-    public void setParentCity(City parentCity) {
-        this.parentCity = parentCity;
-    }
 }

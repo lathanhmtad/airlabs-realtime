@@ -5,95 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; padding: 20px; }
-        .card { margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .table th { background-color: #0d6efd; color: white; }
-    </style>
-    <script>
-        async function fetchJSON(url, options) {
-            const res = await fetch(url, options || {});
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return await res.json();
-        }
-
-        async function loadCities() {
-            const citySelect = document.getElementById('citySelect');
-            citySelect.innerHTML = '<option value="">-- Chọn thành phố --</option>';
-            try {
-                const cities = await fetchJSON('/api/cities');
-                // Sort by name for better UX
-                cities.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-                for (const c of cities) {
-                    const opt = document.createElement('option');
-                    opt.value = c.cityCode; // value = city_code
-                    opt.textContent = c.name + (c.type ? ' (' + c.type + ')' : '');
-                    citySelect.appendChild(opt);
-                }
-            } catch (e) {
-                console.error('Failed to load cities', e);
-            }
-        }
-
-        async function loadAirportsForCity(cityCode) {
-            const airportSelect = document.getElementById('airportSelect');
-            const helper = document.getElementById('airportHelper');
-            airportSelect.innerHTML = '<option value="">-- Đang tải sân bay... --</option>';
-            helper.textContent = '';
-            try {
-                let airports = await fetchJSON('/api/airports?city_code=' + encodeURIComponent(cityCode));
-                if (!airports || airports.length === 0) {
-                    // No airports; trigger import then re-fetch
-                    await fetch('/api/airports/set/' + encodeURIComponent(cityCode), { method: 'POST' });
-                    airports = await fetchJSON('/api/airports?city_code=' + encodeURIComponent(cityCode));
-                }
-
-                airportSelect.innerHTML = '<option value="">-- Chọn sân bay --</option>';
-                // Sort by name for nicer display
-                airports.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-                for (const a of airports) {
-                    const opt = document.createElement('option');
-                    opt.value = a.iataCode; // use IATA for search
-                    const code = a.iataCode ? a.iataCode : (a.icaoCode || '');
-                    opt.textContent = (a.name || code) + (code ? ' (' + code + ')' : '');
-                    airportSelect.appendChild(opt);
-                }
-                if (airports.length === 0) {
-                    helper.textContent = 'Không tìm thấy sân bay cho thành phố này.';
-                }
-            } catch (e) {
-                airportSelect.innerHTML = '<option value="">-- Lỗi tải sân bay --</option>';
-                helper.textContent = 'Có lỗi khi tải danh sách sân bay.';
-                console.error('Failed to load airports', e);
-            }
-        }
-
-        function onCityChange(ev) {
-            const cityCode = ev.target.value;
-            const airportSelect = document.getElementById('airportSelect');
-            airportSelect.innerHTML = '<option value="">-- Vui lòng chọn thành phố trước --</option>';
-            if (cityCode) {
-                loadAirportsForCity(cityCode);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadCities();
-            document.getElementById('citySelect').addEventListener('change', onCityChange);
-        });
-    </script>
+    <link href="/css/index.css" rel="stylesheet">
+    <script src="/js/index.js" defer></script>
     </head>
 <body>
 
 <div class="container">
-    <h2 class="text-center mb-4">✈️ Tra cứu lịch bay (Vietnam Only)</h2>
+    <h2 class="text-center mb-4">✈️ Tra cứu lịch bay (Châu Á)</h2>
 
     <div class="card p-4">
-        <form action="/search" method="post">
+        <form id="searchForm">
             <div class="row">
                 <div class="col-md-5">
-                    <label class="form-label">Chọn Thành Phố:</label>
-                    <select id="citySelect" class="form-select">
+                    <label class="form-label">Chọn Quốc Gia:</label>
+                    <select id="countrySelect" class="form-select">
                         <option value="">-- Đang tải danh sách... --</option>
                     </select>
                 </div>
@@ -101,7 +26,7 @@
                 <div class="col-md-5">
                     <label class="form-label">Chọn Sân Bay:</label>
                     <select id="airportSelect" name="airportCode" class="form-select" required>
-                        <option value="">-- Vui lòng chọn thành phố trước --</option>
+                        <option value="">-- Vui lòng chọn quốc gia trước --</option>
                     </select>
                     <div id="airportHelper" class="form-text"></div>
                 </div>
@@ -112,47 +37,7 @@
             </div>
         </form>
     </div>
-
-    <div th:if="${flights != null}" class="card p-4">
-        <h4 th:text="'Kết quả cho sân bay: ' + ${selectedAirport}"></h4>
-
-        <div th:if="${flights.empty}" class="alert alert-warning">
-            Không tìm thấy chuyến bay nào hoặc API hết hạn mức.
-        </div>
-
-        <table th:if="${!flights.empty}" class="table table-striped table-hover">
-            <thead>
-            <tr>
-                <th>Hãng (IATA)</th>
-                <th>Chuyến bay (IATA)</th>
-                <th>Đi (IATA)</th>
-                <th>Giờ đi</th>
-                <th>Giờ đi UTC</th>
-                <th>Đến (IATA)</th>
-                <th>Giờ đến</th>
-                <th>Giờ đến UTC</th>
-                <th>Trạng thái</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="flight : ${flights}">
-                <td th:text="${flight.airlineIata != null ? flight.airlineIata : '-'}">VJ</td>
-                <td th:text="${flight.flightIata != null ? flight.flightIata : '-'}">VJ719</td>
-                <td th:text="${flight.depIata != null ? flight.depIata : '-'}">DAD</td>
-                <td th:text="${flight.depTime != null ? #temporals.format(flight.depTime, 'HH:mm dd/MM/yyyy') : '-'}">08:25 12/01/2026</td>
-                <td th:text="${flight.depTimeUtc != null ? #temporals.format(flight.depTimeUtc, 'HH:mm dd/MM/yyyy') : '-'}">01:25 12/01/2026</td>
-                <td th:text="${flight.arrIata != null ? flight.arrIata : '-'}">PQC</td>
-                <td th:text="${flight.arrTime != null ? #temporals.format(flight.arrTime, 'HH:mm dd/MM/yyyy') : '-'}">10:10 12/01/2026</td>
-                <td th:text="${flight.arrTimeUtc != null ? #temporals.format(flight.arrTimeUtc, 'HH:mm dd/MM/yyyy') : '-'}">03:10 12/01/2026</td>
-                <td>
-                        <span th:class="${flight.status == 'active' || flight.status == 'landed' ? 'badge bg-success' : 'badge bg-secondary'}"
-                              th:text="${flight.status}">
-                        </span>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+    <div id="flightsContainer"></div>
 </div>
 
 </body>

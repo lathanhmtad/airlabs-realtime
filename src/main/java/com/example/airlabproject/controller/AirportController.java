@@ -17,17 +17,17 @@ public class AirportController {
 
 
     @GetMapping
-    public List<AirportDTO> getAll(@RequestParam(required = false) String city_code){
-        if (city_code != null && !city_code.isBlank()) {
-            return airportService.getByCityCode(city_code);
+    public List<AirportDTO> getAll(@RequestParam(value = "country_code", required = false) String countryCode){
+        if (countryCode != null && !countryCode.isBlank()) {
+            return airportService.getByCountryCode(countryCode);
         }
         return airportService.getAll();
     }
 
 
-    @PostMapping("/set/{city_code}")
-    public int setByCityCode(@PathVariable("city_code") String cityCode) {
-        return airportService.saveByCityCode(cityCode);
+    @PostMapping("/set/{country_code}")
+    public int setByCountryCode(@PathVariable("country_code") String countryCode) {
+        return airportService.saveByCountryCode(countryCode);
     }
 
 }

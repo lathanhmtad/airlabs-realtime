@@ -22,7 +22,12 @@ public class FlightScheduleController {
     @GetMapping()
     public List<FlightScheduleDTO> getAllFlights(@RequestParam(value = "airport_code", required = false) String airportCode) {
         if (airportCode != null && !airportCode.isEmpty()) {
-            return flightService.getFlightsByAirportCode(airportCode);
+            // Ensure data exists/cached by invoking fetch-on-miss then map to DTOs
+            return flightService.getFlights(airportCode).stream()
+                .map(f -> new FlightScheduleDTO(
+                    f.getAirlineIata(), f.getFlightIata(), f.getDepIata(), f.getArrIata(), f.getStatus(), f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
+                ))
+                .toList();
         }
         return flightService.getAll();
     }
