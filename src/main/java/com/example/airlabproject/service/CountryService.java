@@ -25,9 +25,11 @@ import org.slf4j.Logger;
 public class CountryService {
 
     private final CountryRepository countryRepository;
+    private final ContinentRepository continentRepository;
 
-    public CountryService(CountryRepository countryRepository) {
+    public CountryService(CountryRepository countryRepository, ContinentRepository continentRepository) {
         this.countryRepository = countryRepository;
+        this.continentRepository = continentRepository;
     }
 
     private static final Logger log = LoggerFactory.getLogger(CountryService.class);
@@ -50,6 +52,11 @@ public class CountryService {
 
     public List<CountryDTO> getByContinentId(String continentId) {
         if (continentId == null || continentId.isBlank()) return null;
+
+        Continent continent = continentRepository.findById(continentId).orElse(null);
+        if (continent == null) {
+            continentRepository.save(new Continent(continentId));
+        }
 
         List<Country> countries = countryRepository.findAllByContinent_Id(continentId);
         if (countries.isEmpty()) {
