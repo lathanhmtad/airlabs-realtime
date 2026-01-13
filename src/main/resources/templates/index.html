@@ -17,14 +17,20 @@
         <form id="searchForm">
             <div class="row">
                 <div class="col-md-5">
-                    <label class="form-label">Chọn Quốc Gia:</label>
+                    <label class="form-label">
+                        Chọn Quốc Gia:
+                        <span id="countrySpinner" class="spinner-border spinner-border-sm text-primary d-none ms-2"></span>
+                    </label>
                     <select id="countrySelect" class="form-select">
                         <option value="">-- Đang tải danh sách... --</option>
                     </select>
                 </div>
 
                 <div class="col-md-5">
-                    <label class="form-label">Chọn Sân Bay:</label>
+                    <label class="form-label">
+                        Chọn Sân Bay:
+                        <span id="airportSpinner" class="spinner-border spinner-border-sm text-primary d-none ms-2"></span>
+                    </label>
                     <select id="airportSelect" name="airportCode" class="form-select" required>
                         <option value="">-- Vui lòng chọn quốc gia trước --</option>
                     </select>

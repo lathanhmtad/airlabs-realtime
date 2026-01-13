@@ -67,8 +67,6 @@ public class FlightScheduleService {
             .collect(Collectors.toList());
     }
 
-
-
     private List<FlightSchedule> fetchFromApiAndSave(String airportCode) {
         String url = API_URL + "?dep_iata=" + airportCode + "&api_key=" + apiKey;
 
@@ -114,7 +112,6 @@ public class FlightScheduleService {
             return flightRepository.saveAll(flightList);
 
         } catch (Exception e) {
-            // Log minimal; return empty list on error
             return new ArrayList<>();
         }
     }
