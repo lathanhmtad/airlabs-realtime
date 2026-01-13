@@ -1,6 +1,5 @@
 package com.example.airlabproject.repository;
 
-import com.example.airlabproject.dto.AirportDTO;
 import com.example.airlabproject.entity.Airport;
 import org.springframework.data.jpa.repository.JpaRepository;
 

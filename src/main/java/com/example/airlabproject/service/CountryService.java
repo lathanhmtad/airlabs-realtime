@@ -46,7 +46,7 @@ public class CountryService {
                 .collect(Collectors.toList());
     }
 
-    public int setAll() {
+    public int saveAllFromAirlabs() {
         List<Continent> continents = continentRepository.findAll();
         if (continents.isEmpty()) return 0;
 

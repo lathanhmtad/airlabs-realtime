@@ -23,7 +23,6 @@ public class FlightSchedule {
     private LocalDateTime depTimeUtc; // Giờ đi UTC
     private LocalDateTime arrTimeUtc; // Giờ đến UTC
 
-    // Trường quan trọng để check cache
     private LocalDateTime createdAt;
 
     @PrePersist

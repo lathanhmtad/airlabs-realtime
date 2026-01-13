@@ -38,17 +38,21 @@ public class AirportService {
     }
 
     public List<AirportDTO> getByCountryCode(String countryCode) {
-        return airportRepository.findAllByParentCountry_Code(countryCode)
-            .stream()
-            .map(c -> new AirportDTO(
-                c.getIataCode(),
-                c.getName(),
-                c.getIcaoCode(),
-                c.getLat(),
-                c.getLng(),
-                c.getParentCountry() != null ? c.getParentCountry().getCode() : null
-            ))
-            .collect(Collectors.toList());
+        List<Airport> list = airportRepository.findAllByParentCountry_Code(countryCode);
+        if (list == null || list.isEmpty()) {
+            saveByCountryCode(countryCode);
+            list = airportRepository.findAllByParentCountry_Code(countryCode);
+        }
+        return list.stream()
+                .map(c -> new AirportDTO(
+                        c.getIataCode(),
+                        c.getName(),
+                        c.getIcaoCode(),
+                        c.getLat(),
+                        c.getLng(),
+                        c.getParentCountry() != null ? c.getParentCountry().getCode() : null
+                ))
+                .collect(Collectors.toList());
     }
 
     public int saveByCountryCode(String countryCode) {

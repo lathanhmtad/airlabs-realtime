@@ -27,11 +27,7 @@ async function loadAirportsForCountry(countryCode) {
   airportSelect.innerHTML = '<option value="">-- Đang tải sân bay... --</option>';
   helper.textContent = '';
   try {
-    let airports = await fetchJSON('/api/airports?country_code=' + encodeURIComponent(countryCode));
-    if (!airports || airports.length === 0) {
-      await fetch('/api/airports/set/' + encodeURIComponent(countryCode), { method: 'POST' });
-      airports = await fetchJSON('/api/airports?country_code=' + encodeURIComponent(countryCode));
-    }
+    const airports = await fetchJSON('/api/airports?country_code=' + encodeURIComponent(countryCode));
 
     airportSelect.innerHTML = '<option value="">-- Chọn sân bay --</option>';
     airports.sort((a, b) => (a.name || '').localeCompare(b.name || ''));

@@ -25,9 +25,6 @@ public class AirportController {
     }
 
 
-    @PostMapping("/set/{country_code}")
-    public int setByCountryCode(@PathVariable("country_code") String countryCode) {
-        return airportService.saveByCountryCode(countryCode);
-    }
+    
 
 }
