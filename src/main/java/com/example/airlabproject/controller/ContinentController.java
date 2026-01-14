@@ -15,11 +15,6 @@ public class ContinentController {
         this.continentService = continentService;
     }
 
-    @PostMapping
-    public ContinentDTO create(@RequestBody ContinentDTO dto){
-        return continentService.create(dto);
-    }
-
     @GetMapping
     public List<ContinentDTO> getAll(){
         return continentService.getAll();
