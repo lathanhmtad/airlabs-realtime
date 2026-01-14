@@ -80,8 +80,18 @@ public class FlightScheduleService {
     }
 
     public List<FlightScheduleDTO> getFlightsByAirportCode(String airportCode) {
-        return flightRepository.findByDepIata(airportCode).stream()
-                .map(this::maptoDTO).collect(Collectors.toList());
+        // Kiểm tra cache trước (30 phút)
+        LocalDateTime timeThreshold = LocalDateTime.now().minusMinutes(30);
+        List<FlightSchedule> cachedData = flightRepository.findByDepIataAndCreatedAtAfter(airportCode, timeThreshold);
+
+        if (cachedData.isEmpty()) {
+            // Nếu không có cache hợp lệ -> gọi API
+            cachedData = fetchFromApiAndSave(airportCode);
+        }
+
+        return cachedData.stream()
+                .map(this::maptoDTO)
+                .collect(Collectors.toList());
     }
 
     private List<FlightSchedule> fetchFromApiAndSave(String airportCode) {
