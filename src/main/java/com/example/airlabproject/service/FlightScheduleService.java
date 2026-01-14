@@ -1,7 +1,12 @@
 package com.example.airlabproject.service;
 
+import com.example.airlabproject.dto.CountryDTO;
 import com.example.airlabproject.dto.FlightScheduleDTO;
+import com.example.airlabproject.entity.Airline;
 import com.example.airlabproject.entity.FlightSchedule;
+import com.example.airlabproject.repository.AirlineRepository;
+import com.example.airlabproject.repository.AirportRepository;
+import com.example.airlabproject.repository.CountryRepository;
 import com.example.airlabproject.repository.FlightScheduleRepository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,30 +33,58 @@ public class FlightScheduleService {
     @Autowired
     private FlightScheduleRepository flightRepository;
 
+    @Autowired
+    private AirlineRepository airlineRepository;
+
+    @Autowired
+    private AirportRepository airportRepository;
+
     @Value("${api-key-airlabs}")
     private String apiKey;
 
     private final String API_URL = "https://airlabs.co/api/v9/schedules";
 
     @Transactional
-    public List<FlightScheduleDTO> getFlights(String airportCode) {
+    public List<FlightSchedule> getFlights(String airportCode) {
+
         LocalDateTime timeThreshold = LocalDateTime.now().minusMinutes(30);
 
         List<FlightSchedule> cachedData = flightRepository.findByDepIataAndCreatedAtAfter(airportCode, timeThreshold);
 
         if (!cachedData.isEmpty()) {
-            System.out.println("--> Lấy dữ liệu từ DATABASE (Cache)");
-            return cachedData.stream()
-                .map(f -> new FlightScheduleDTO(
-                    f.getAirlineIata(), f.getFlightIata(), f.getDepIata(), f.getArrIata(), f.getStatus(), f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
-                ))
-                .toList();
+            System.out.println("--> Láº¥y dá»¯ liá»‡u tá»« DATABASE (Cache)");
+            return cachedData;
         }
-        System.out.println("--> Gọi AIRLABS API mới");
+
+
+        System.out.println("--> Gá»i AIRLABS API má»›i");
         return fetchFromApiAndSave(airportCode);
     }
 
-    private List<FlightScheduleDTO> fetchFromApiAndSave(String airportCode) {
+    public List<FlightScheduleDTO> getAll() {
+        return flightRepository.findAll().stream()
+                .map(this::maptoDTO).collect(Collectors.toList());
+    }
+
+    public FlightScheduleDTO maptoDTO(FlightSchedule f) {
+        String airlineName = null;
+        if(f.getAirlineIata() != null) {
+            airlineName = airlineRepository.findByIataCode(f.getAirlineIata())
+                    .map(Airline::getName).orElse(null);
+        }
+
+        return new FlightScheduleDTO(
+                f.getAirlineIata(), airlineName, f.getFlightIata(), f.getDepIata(), f.getArrIata(),
+                f.getStatus(),f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
+        );
+    }
+
+    public List<FlightScheduleDTO> getFlightsByAirportCode(String airportCode) {
+        return flightRepository.findByDepIata(airportCode).stream()
+                .map(this::maptoDTO).collect(Collectors.toList());
+    }
+
+    private List<FlightSchedule> fetchFromApiAndSave(String airportCode) {
         String url = API_URL + "?dep_iata=" + airportCode + "&api_key=" + apiKey;
 
         try {
@@ -93,12 +126,8 @@ public class FlightScheduleService {
 
             // Refresh cache for this departure airport
             flightRepository.deleteByDepIata(airportCode);
-            List<FlightSchedule> savedFlights = flightRepository.saveAll(flightList);
-            return savedFlights.stream()
-                .map(f -> new FlightScheduleDTO(
-                    f.getAirlineIata(), f.getFlightIata(), f.getDepIata(), f.getArrIata(), f.getStatus(), f.getDepTime(), f.getArrTime(), f.getDepTimeUtc(), f.getArrTimeUtc()
-                ))
-                .collect(Collectors.toList());
+            return flightRepository.saveAll(flightList);
+
         } catch (Exception e) {
             return new ArrayList<>();
         }
