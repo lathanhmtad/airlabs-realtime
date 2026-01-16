@@ -161,22 +161,87 @@ function renderFlights(flights) {
   container.appendChild(card);
 }
 
+// Track current flights for filtering
+let currentFlights = [];
+
+// Compute status stats
+function computeStatusStats(flights) {
+  const stats = { landed: 0, active: 0, scheduled: 0 };
+  for (const f of flights || []) {
+    const s = (f.status || '').toLowerCase();
+    if (s in stats) stats[s]++;
+  }
+  return stats;
+}
+
+// Read selected statuses from checkboxes
+function getSelectedStatuses() {
+  const set = new Set();
+  if (document.getElementById('chkActive')?.checked) set.add('active');
+  if (document.getElementById('chkLanded')?.checked) set.add('landed');
+  if (document.getElementById('chkScheduled')?.checked) set.add('scheduled');
+  return set;
+}
+
+// Filter flights by selected statuses
+function filterFlightsByStatus(flights, selected) {
+  if (!selected || selected.size === 0) return flights || [];
+  return (flights || []).filter(f => selected.has((f.status || '').toLowerCase()));
+}
+
+// Update counters next to each status
+function updateStatusBadges(stats) {
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+  setText('count-active', stats.active ?? 0);
+  setText('count-landed', stats.landed ?? 0);
+  setText('count-scheduled', stats.scheduled ?? 0);
+}
+
+// Update visible flights count
+function updateVisibleCount(n) {
+  const el = document.getElementById('visible-count');
+  if (el) el.textContent = String(n ?? 0);
+}
+
+// Handle changing filters
+function onStatusFilterChange() {
+  const selected = getSelectedStatuses();
+  const filtered = filterFlightsByStatus(currentFlights, selected);
+  updateVisibleCount(filtered.length);
+  renderFlights(filtered);
+}
+
+// Modify onSearch to store flights, compute stats, apply filters, and render
 async function onSearch(e) {
   e.preventDefault();
   const airportCode = document.getElementById('airportSelect').value;
   if (!airportCode) return;
   try {
     const flights = await fetchJSON('/api/flights?airport_code=' + encodeURIComponent(airportCode));
-    renderFlights(flights);
+    
+    // Update danh sach chuyen bay hien tai
+    currentFlights = flights || [];
+    updateStatusBadges(computeStatusStats(currentFlights));
+    const filtered = filterFlightsByStatus(currentFlights, getSelectedStatuses());
+    updateVisibleCount(filtered.length);
+    renderFlights(filtered);
   } catch (err) {
     console.error(err);
+    currentFlights = [];
+    updateStatusBadges(computeStatusStats(currentFlights));
+    updateVisibleCount(0);
     renderFlights([]);
   }
 }
 
+// Wire up filter checkboxes
 document.addEventListener('DOMContentLoaded', () => {
   loadCountriesAsia();
   document.getElementById('countrySelect').addEventListener('change', onCountryChange);
   const form = document.getElementById('searchForm');
   if (form) form.addEventListener('submit', onSearch);
+
+  document.getElementById('chkActive')?.addEventListener('change', onStatusFilterChange);
+  document.getElementById('chkLanded')?.addEventListener('change', onStatusFilterChange);
+  document.getElementById('chkScheduled')?.addEventListener('change', onStatusFilterChange);
 });

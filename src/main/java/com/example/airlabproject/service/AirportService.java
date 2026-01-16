@@ -5,6 +5,7 @@ import com.example.airlabproject.entity.Airport;
 import com.example.airlabproject.entity.Country;
 import com.example.airlabproject.repository.AirportRepository;
 import com.example.airlabproject.repository.CountryRepository;
+import com.example.airlabproject.util.AirportCache;
 import com.google.gson.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,24 +33,18 @@ public class AirportService {
     }
 
     public List<AirportDTO> getByCountryCode(String countryCode) {
+        //Get from cache
+        List<AirportDTO> cachedAirports = AirportCache.get(countryCode);
+        if (cachedAirports != null) {
+            return cachedAirports;
+        }
+
         List<Airport> airports = airportRepository.findAllByCountry_Code(countryCode);
 
         if (airports.isEmpty()) {
-            List<Airport> savedAirport = fetchAndSaveByCountryCode(countryCode);
-            return savedAirport
-                    .stream()
-                    .map(c -> new AirportDTO(
-                            c.getIataCode(),
-                            c.getName(),
-                            c.getIcaoCode(),
-                            c.getLat(),
-                            c.getLng(),
-                            c.getCountry() != null ? c.getCountry().getCode() : null
-                    ))
-                    .collect(Collectors.toList());
+            airports = fetchAndSaveByCountryCode(countryCode);
         }
-
-        return airportRepository.findAllByCountry_Code(countryCode)
+        cachedAirports = airports
                 .stream()
                 .map(c -> new AirportDTO(
                         c.getIataCode(),
@@ -60,6 +55,10 @@ public class AirportService {
                         c.getCountry() != null ? c.getCountry().getCode() : null
                 ))
                 .collect(Collectors.toList());
+
+        AirportCache.add(countryCode, cachedAirports);
+
+        return cachedAirports;
     }
 
     private List<Airport> fetchAndSaveByCountryCode(String countryCode) {

@@ -5,6 +5,7 @@ import com.example.airlabproject.entity.Continent;
 import com.example.airlabproject.entity.Country;
 import com.example.airlabproject.repository.ContinentRepository;
 import com.example.airlabproject.repository.CountryRepository;
+import com.example.airlabproject.util.CountryCache;
 import com.google.gson.*;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,15 +50,24 @@ public class CountryService {
         if (continent == null) {
             continentRepository.save(new Continent(continentId));
         }
+        //Get from cache
+        List<CountryDTO> cacheCountryDTOs = CountryCache.getAll();
+        if (!cacheCountryDTOs.isEmpty()) {
+            return cacheCountryDTOs;
+        }
 
+        //Get from DB
         List<Country> countries = countryRepository.findAllByContinent_Id(continentId);
         if (countries.isEmpty()) {
+            //Get from APi
             countries = fetchAndSaveCountriesByContinent(continentId);
         }
-        return countries
-                .stream()
-                .map(c -> new CountryDTO(c.getCode(), c.getCode3(), c.getName(), c.getContinent() != null ? c.getContinent().getId() : null))
-                .collect(Collectors.toList());
+        cacheCountryDTOs = countries
+                            .stream()
+                            .map(c -> new CountryDTO(c.getCode(), c.getCode3(), c.getName(), c.getContinent() != null ? c.getContinent().getId() : null))
+                            .collect(Collectors.toList());
+        CountryCache.addAll(cacheCountryDTOs);
+        return cacheCountryDTOs;
     }
 
     private List<Country> fetchAndSaveCountriesByContinent(String continentId) {
