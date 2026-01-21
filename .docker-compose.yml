@@ -3,8 +3,8 @@ services:
     image: airlab-project:latest
     container_name: airlab-app
     ports:
-      - "8081:8081"
+      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://116.110.153.73:8080/airlabsdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://dpg-d5nel4smrvns73fmrh2g-a.oregon-postgres.render.com:5432/airlabsdb
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Strong@Password123!
+      SPRING_DATASOURCE_PASSWORD: 0YtGGV2K2o4SNILlUsBBIIdUS6G24q3F

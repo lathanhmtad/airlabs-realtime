@@ -10,7 +10,5 @@ public class AirlabProjectApplication {
         SpringApplication.run(AirlabProjectApplication.class, args);
     }
     
-
-
     //test comment
 }
