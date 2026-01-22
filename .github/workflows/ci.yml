@@ -50,5 +50,5 @@ jobs:
             # Chạy container mới
             docker run -d \
               --name my-app-container \
-              -p 80:3000 \
+              -p 80:8080 \
               ${{ secrets.DOCKERHUB_USERNAME }}/airlab:latest
