@@ -44,11 +44,11 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/airlab:latest
             
             # Dừng và xóa container cũ (nếu có)
-            docker stop my-app-container || true
-            docker rm my-app-container || true
+            docker stop airlab-app || true
+            docker rm airlab-app || true
             
             # Chạy container mới
             docker run -d \
-              --name my-app-container \
+              --name airlab-app \
               -p 80:8080 \
               ${{ secrets.DOCKERHUB_USERNAME }}/airlab:latest
